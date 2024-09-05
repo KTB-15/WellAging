@@ -35,14 +35,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
 // 라우팅 버튼 column을 가진 화면
 @Composable
 fun MainScreen(innerPadding: PaddingValues) {
@@ -58,13 +50,5 @@ fun MainScreen(innerPadding: PaddingValues) {
         ) {
             Text("채팅")
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    WellAgingTheme {
-        Greeting("Android")
     }
 }

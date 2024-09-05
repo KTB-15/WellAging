@@ -161,7 +161,7 @@ fun ChatScreen(
     var hasRecognizedText by remember { mutableStateOf(false) }
 
     LaunchedEffect(recognizedText) {
-        if (recognizedText.isNotEmpty()) {
+        if (recognizedText.isNotEmpty() && !hasRecognizedText) {
             inputText = TextFieldValue(recognizedText)
             hasRecognizedText = true
         } else if (isListening && !hasRecognizedText) {
