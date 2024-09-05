@@ -66,7 +66,4 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-
-    // Ensure the correct version and format
-    implementation("androidx.health.connect:connect-client:1.1.0-alpha07")
 }
