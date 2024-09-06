@@ -16,37 +16,25 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.wellaging.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Home(navController: NavController) {
-    var fontSizeAdjustment by remember { mutableStateOf(0f) }
 
     Scaffold(
         topBar = {
             Column {
-                TopAppBarWithFontControl(
-                    onFontSizeIncrease = {
-                        if (fontSizeAdjustment < 12f) {
-                            fontSizeAdjustment += 4f
-                        }
-                    },
-                    onFontSizeDecrease = {
-                        if (fontSizeAdjustment > -8f) {
-                            fontSizeAdjustment -= 4f
-                        }
-                    }
-                )
-
                 Image(
                     painter = painterResource(id = R.drawable.images),
                     contentDescription = "Ad Banner",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(60.dp)
+                        .height(100.dp)
+                        .padding(15.dp)
                 )
             }
         }
@@ -58,63 +46,20 @@ fun Home(navController: NavController) {
                 .padding(horizontal = 16.dp),
             contentAlignment = Alignment.Center
         ) {
-            SavingsProgress(fontSizeAdjustment)
+            SavingsProgress()
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopAppBarWithFontControl(
-    onFontSizeIncrease: () -> Unit,
-    onFontSizeDecrease: () -> Unit
-) {
-    TopAppBar(
-        title = {
-            Text(
-                "WellAging",
-                fontSize = 24.sp,
-                color = Color.White
-            )
-        },
-        actions = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            ) {
-                Text(
-                    text = "가",
-                    fontSize = 16.sp,
-                    color = Color.White,
-                    modifier = Modifier
-                        .clickable { onFontSizeDecrease() }
-                        .padding(horizontal = 8.dp)
-                )
-                Text(
-                    text = "가",
-                    fontSize = 24.sp,
-                    color = Color.White,
-                    modifier = Modifier
-                        .clickable { onFontSizeIncrease() }
-                        .padding(horizontal = 8.dp)
-                )
-            }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color(red = 255, green = 65, blue = 145)
-        )
-    )
-}
-
-@Composable
-fun SavingsProgress(fontSizeAdjustment: Float) {
+fun SavingsProgress() {
     val totalSteps = 10000f
     val currentSteps = 1876f
     val progressPercentage = currentSteps / totalSteps
     val sections = 4
 
-    val stepTextSize = (28f + fontSizeAdjustment).sp
-    val labelTextSize = (20f + fontSizeAdjustment).sp
+    val stepTextSize = 28.sp
+    val labelTextSize = 20.sp
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
