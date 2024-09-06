@@ -1,6 +1,8 @@
 package com.example.wellaging.screens
 
 import android.Manifest
+import android.content.Context
+import android.speech.tts.TextToSpeech
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -17,6 +19,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,6 +28,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -33,8 +37,10 @@ import com.example.wellaging.model.ChatViewModel
 import com.example.wellaging.ui.chat.ChatBubble
 import com.example.wellaging.ui.chat.MicButton
 import com.example.wellaging.ui.component.ApiTask
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.json.JSONObject
+import java.util.Locale
 
 val TALK_PROMPT = """
     당신은 어르신과 친근하게 대화를 나누는 상대입니다. 
@@ -62,6 +68,126 @@ val TALK_PROMPT = """
     
 """
 
+val TALK_PROMPT2 = "다음 말들을 이어가봐. 단, 20자 이내로 최대한 짧게 이어가."
+
+class TtsWrapper(context: Context) {
+    private var tts: TextToSpeech? = null
+    var isReady by mutableStateOf(false)
+        private set
+
+    init {
+        tts = TextToSpeech(context) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                setKoreanLanguage()
+                isReady = true
+            } else {
+                Log.e("TTSSTTSS", "Failed to initialize TextToSpeech. Status: $status")
+            }
+        }
+    }
+
+    private fun setKoreanLanguage() {
+        tts?.let { ttsInstance ->
+            val result = ttsInstance.setLanguage(Locale.KOREAN)
+            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                Log.e("TTSSTTSS", "Korean language is not supported")
+            } else {
+                Log.i("TTSSTTSS", "Korean language set successfully")
+            }
+        }
+    }
+
+    fun speakText(text: String) {
+        if (!isReady) {
+            Log.e("TTSSTTSS", "TextToSpeech is not ready yet")
+            return
+        }
+
+        tts?.let { ttsInstance ->
+            if (ttsInstance.isSpeaking) {
+                Log.e("TTSSTTSS", "Already Speaking")
+                ttsInstance.stop()
+            }
+            if (ttsInstance.isLanguageAvailable(Locale.KOREAN) >= TextToSpeech.LANG_AVAILABLE) {
+                ttsInstance.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
+                Log.i("TTSSTTSS", "Speak Successfully")
+            } else {
+                Log.e("TTSSTTSS", "Korean language is not available")
+            }
+        } ?: Log.e("TTSSTTSS", "TextToSpeech instance is null")
+    }
+
+    fun shutdown() {
+        tts?.shutdown()
+    }
+}
+
+@Composable
+fun rememberTtsWrapper(context: Context): TtsWrapper {
+    val ttsWrapper = remember { TtsWrapper(context) }
+
+    DisposableEffect(context) {
+        onDispose {
+            ttsWrapper.shutdown()
+        }
+    }
+
+    return ttsWrapper
+}
+
+@Composable
+fun rememberTextToSpeech(context: Context): Pair<TextToSpeech?, Boolean> {
+    var tts by remember { mutableStateOf<TextToSpeech?>(null) }
+    var isReady by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(context) {
+        var localTextToSpeechInstance: TextToSpeech? = null
+
+        localTextToSpeechInstance = TextToSpeech(context) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                coroutineScope.launch(Dispatchers.Main) {
+                    tts = localTextToSpeechInstance
+                    localTextToSpeechInstance?.let {
+                        setKoreanLanguage(it)
+                        isReady = true
+                    }
+                }
+            } else {
+                Log.e("TTSSTTSS", "Failed to initialize TextToSpeech. Status: $status")
+            }
+        }
+    }
+
+    return Pair(tts, isReady)
+}
+
+// TTS 함수
+fun TextToSpeech?.speakText(text: String, isReady: Boolean) {
+    this?.let { ttsInstance ->
+        if (ttsInstance.isSpeaking) {
+            Log.e("TTSSTTSS", "Already Speaking")
+            ttsInstance.stop()
+        }
+        // 초기화 완료 확인
+        if (ttsInstance.isLanguageAvailable(Locale.KOREAN) >= TextToSpeech.LANG_AVAILABLE) {
+            ttsInstance.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
+            Log.i("TTSSTTSS", "Speak Successfully")
+        } else {
+            Log.e("TTSSTTSS", "Korean language is not available")
+        }
+    } ?: Log.e("TTSSTTSS", "TextToSpeech instance is null")
+}
+
+private fun setKoreanLanguage(tts: TextToSpeech) {
+    val result = tts.setLanguage(Locale.KOREAN)
+    if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+        Log.e("TTSSTTSS", "Korean language is not supported or missing")
+    } else {
+        Log.d("TTSSTTSS", "TextToSpeech initialized successfully with Korean language")
+    }
+}
+
 @Composable
 fun Chat(
     navController: NavHostController,
@@ -76,33 +202,38 @@ fun Chat(
     val permissionNeeded by viewModel.permissionNeeded
     var isWaitingForAiResponse by remember { mutableStateOf(false) }
 
-    var accumulatedChat by remember { mutableStateOf(TALK_PROMPT) } // 누적 텍스트
+    var accumulatedChat by remember { mutableStateOf(TALK_PROMPT2) } // 누적 텍스트
 
     val apiTask = remember { ApiTask() }
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val ttsWrapper = rememberTtsWrapper(context)
 
     val addMessage = remember {
         { message: String, isUser: Boolean ->
             messages = messages + Pair(message, isUser)
             if (isUser) {
-                accumulatedChat += "어르신: $message\n"
                 isWaitingForAiResponse = true
                 coroutineScope.launch {
                     try {
                         val aiResponse = apiTask.getUserInfo(accumulatedChat, message)
                         val aiMessage = JSONObject(aiResponse).getString("body")
                         messages = messages + Pair(aiMessage, false)
-                        accumulatedChat += "당신: $aiMessage"
+                        accumulatedChat += "어르신: $message 당신: $aiMessage "
                         Log.d("누적 텍스트??", accumulatedChat)
+                        ttsWrapper.speakText(aiMessage)
                     } catch (e: Exception) {
                         val errorMessage = "죄송합니다. 오류가 발생했습니다: ${e.message}"
                         messages = messages + Pair(errorMessage, false)
+                        ttsWrapper.speakText(errorMessage)
                     } finally {
                         isWaitingForAiResponse = false
                     }
                 }
+            } else {
+                accumulatedChat += "당신: $message "
+                ttsWrapper.speakText(message)
             }
-            else accumulatedChat += "당신: $message "
             Log.d("누적 텍스트", accumulatedChat)
         }
     }
@@ -134,6 +265,7 @@ fun Chat(
                     viewModel.startListening()
                 }
             }
+
             permissionNeeded -> {
                 permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
             }
@@ -153,33 +285,34 @@ fun Chat(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp)
-        ) {LazyColumn(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            verticalArrangement = Arrangement.Top
         ) {
-            items(messages) { (message, isUser) ->
-                ChatBubble(
-                    message = message,
-                    isUser = isUser,
-                    fontSizeAdjustment = fontSizeAdjustment
-                )
-            }
-            item {
-                if (isWaitingForAiResponse) {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .align(Alignment.CenterHorizontally)
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.Top
+            ) {
+                items(messages) { (message, isUser) ->
+                    ChatBubble(
+                        message = message,
+                        isUser = isUser,
+                        fontSizeAdjustment = fontSizeAdjustment
                     )
                 }
+                item {
+                    if (isWaitingForAiResponse) {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .align(Alignment.CenterHorizontally)
+                        )
+                    }
+                }
             }
-        }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            MicButton(isListening = isListening, onMicClick = {onMicClick()})
+            MicButton(isListening = isListening, onMicClick = { onMicClick() })
         }
     }
 
