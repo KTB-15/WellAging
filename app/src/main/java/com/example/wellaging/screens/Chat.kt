@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -17,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -25,6 +28,7 @@ import com.example.wellaging.model.ChatViewModel
 import com.example.wellaging.ui.chat.ChatBubble
 import com.example.wellaging.ui.chat.ChatTopBar
 import com.example.wellaging.ui.chat.MicButton
+import com.example.wellaging.ui.component.ApiTask
 
 @Composable
 fun Chat(
@@ -37,9 +41,17 @@ fun Chat(
     val isListening by viewModel.isListening
     val permissionGranted by viewModel.permissionGranted
     val permissionNeeded by viewModel.permissionNeeded
+    var isWaitingForAiResponse by remember { mutableStateOf(false) }
 
     fun addMessage(message: String, isUser: Boolean) {
         messages = messages + Pair(message, isUser)
+        if (isUser) {
+            isWaitingForAiResponse = true
+            ApiTask { aiResponse ->
+                addMessage(aiResponse, false)
+                isWaitingForAiResponse = false
+            }.execute(message)
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -62,7 +74,7 @@ fun Chat(
 
     fun onMicClick() {
         when {
-            permissionGranted -> {
+            permissionGranted && !isWaitingForAiResponse -> {
                 if (isListening) {
                     viewModel.stopListening()
                 } else {
@@ -105,6 +117,13 @@ fun Chat(
                         message = message,
                         isUser = isUser,
                         fontSizeAdjustment = fontSizeAdjustment
+                    )
+                }
+                if (isWaitingForAiResponse) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .align(Alignment.CenterHorizontally)
                     )
                 }
             }

@@ -137,7 +137,7 @@ fun SpeechRecognitionButton(
     }
 }
 
-class GptApiTask(private val onComplete: (String) -> Unit) : AsyncTask<String, Void, String>() {
+class ApiTask(private val onComplete: (String) -> Unit) : AsyncTask<String, Void, String>() {
     override fun doInBackground(vararg params: String): String {
         val message = params[0]
         val encodedMessage = URLEncoder.encode(message, "UTF-8")
