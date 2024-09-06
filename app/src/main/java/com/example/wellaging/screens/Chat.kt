@@ -84,15 +84,16 @@ fun Chat(
     val addMessage = remember {
         { message: String, isUser: Boolean ->
             messages = messages + Pair(message, isUser)
-            accumulatedChat += "당신: $message "
             if (isUser) {
+                accumulatedChat += "어르신: $message\n"
                 isWaitingForAiResponse = true
                 coroutineScope.launch {
                     try {
                         val aiResponse = apiTask.getUserInfo(accumulatedChat, message)
                         val aiMessage = JSONObject(aiResponse).getString("body")
                         messages = messages + Pair(aiMessage, false)
-                        accumulatedChat += "어르신: $message"
+                        accumulatedChat += "당신: $aiMessage"
+                        Log.d("누적 텍스트??", accumulatedChat)
                     } catch (e: Exception) {
                         val errorMessage = "죄송합니다. 오류가 발생했습니다: ${e.message}"
                         messages = messages + Pair(errorMessage, false)
@@ -101,6 +102,7 @@ fun Chat(
                     }
                 }
             }
+            else accumulatedChat += "당신: $message "
             Log.d("누적 텍스트", accumulatedChat)
         }
     }
