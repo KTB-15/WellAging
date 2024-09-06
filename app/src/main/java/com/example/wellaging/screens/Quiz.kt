@@ -35,8 +35,12 @@ import com.example.wellaging.model.ChatViewModel
 import com.example.wellaging.ui.chat.ChatBubble
 import com.example.wellaging.ui.chat.MicButton
 import com.example.wellaging.ui.component.ApiTask
+import com.example.wellaging.ui.component.ChatItem
 import kotlinx.coroutines.launch
 import org.json.JSONObject
+
+// 전역 퀴즈
+var quizs: MutableList<ChatItem> = mutableListOf()
 
 @Composable
 fun Quiz(

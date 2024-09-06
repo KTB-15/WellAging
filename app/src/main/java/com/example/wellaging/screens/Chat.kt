@@ -37,8 +37,10 @@ import com.example.wellaging.model.ChatViewModel
 import com.example.wellaging.ui.chat.ChatBubble
 import com.example.wellaging.ui.chat.MicButton
 import com.example.wellaging.ui.component.ApiTask
+import com.example.wellaging.ui.component.ChatItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Locale
 
@@ -135,6 +137,11 @@ fun rememberTtsWrapper(context: Context): TtsWrapper {
     return ttsWrapper
 }
 
+val greeting = "안녕하세요! 요즘 날씨 어떤가요?"
+
+// 전역 대화
+var chatHistory: MutableList<ChatItem> = mutableListOf()
+
 @Composable
 fun Chat(
     navController: NavHostController,
@@ -157,6 +164,10 @@ fun Chat(
     val context = LocalContext.current
     val ttsWrapper = rememberTtsWrapper(context)
 
+    // ChatItem을 만들기 위한 변수
+    var currentQuestion = ""
+    var currentAnswer = ""
+
     val addMessage = remember {
         { message: String, isUser: Boolean ->
             messages = messages + Pair(message, isUser)
@@ -168,14 +179,33 @@ fun Chat(
                         val aiMessage = JSONObject(aiResponse).getString("body")
                         messages = messages + Pair(aiMessage, false)
                         accumulatedChat += "어르신: $message 당신: $aiMessage "
+                        currentAnswer = message
+                        chatHistory.add(ChatItem(currentQuestion, currentAnswer))
+                        currentQuestion = aiMessage
                         Log.d("누적 텍스트??", accumulatedChat)
                         ttsWrapper.speakText(aiMessage)
 
                         // 대화 길이 초과시 종료
-                        if (accumulatedChat.length - TALK_PROMPT_LENGTH >= 400) {
+                        if (accumulatedChat.length - TALK_PROMPT_LENGTH >= 100) {
                             messages = messages + Pair("대화가 종료되었습니다. 감사합니다.", false)
                             ttsWrapper.speakText("대화가 종료되었습니다. 감사합니다.")
                             isChatEnded = true
+                            // 퀴즈 복사
+                            val quizResponse = apiTask.makeQnA(chatHistory)
+                            quizs = try {
+                                val jsonArray = JSONArray(quizResponse)
+                                MutableList(jsonArray.length()) { index ->
+                                    val jsonObject = jsonArray.getJSONObject(index)
+                                    ChatItem(
+                                        Q = jsonObject.getString("Q"),
+                                        A = jsonObject.getString("A")
+                                    )
+                                }
+                            } catch (e: Exception) {
+                                mutableListOf()
+                            }
+                            // 대화 종료시 전역 변수 초기화
+                            Log.d("TTSTTSTTS", quizs.toString())
                         }
                     } catch (e: Exception) {
                         val errorMessage = "죄송합니다. 오류가 발생했습니다: ${e.message}, $message"
@@ -195,7 +225,8 @@ fun Chat(
 
     LaunchedEffect(Unit) {
         viewModel.checkAndRequestAudioPermission()
-        addMessage("안녕하세요! 요즘 날씨 어떤가요?", false)
+        currentQuestion = greeting
+        addMessage(greeting, false)
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
