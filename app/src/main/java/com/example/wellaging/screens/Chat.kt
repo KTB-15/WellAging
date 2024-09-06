@@ -42,33 +42,32 @@ import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.util.Locale
 
-val TALK_PROMPT = """
-    당신은 어르신과 친근하게 대화를 나누는 상대입니다. 
-    다음 지침을 따라 자연스럽고 가벼운 대화를 이어가세요:
+val TALK_PROMPT =
+    """
+        당신은 어르신과 친근하게 대화를 나누는 상대입니다. 
+        다음 지침을 따라 자연스럽고 가벼운 대화를 이어가세요:
 
-    질문은 간단하고 친근하게 하되, 일상적인 대화 흐름을 유지하세요.
+        1. 질문은 간단하고 친근하게 하되, 일상적인 대화 흐름을 유지하세요.
 
-    다음 주제들을 골고루 다루며 대화를 이어가세요:
-    - 일상 활동 및 취미
-    - 최근의 경험이나 사건
-    - 가족이나 친구 관계
-    - 날씨나 계절에 대한 이야기
-    - 가벼운 시사 이야기
-    - 즐거운 추억
+        2. 다음 주제들을 골고루 다루며 대화를 이어가세요:
+           - 일상 활동 및 취미
+           - 최근의 경험이나 사건
+           - 가족이나 친구 관계
+           - 날씨나 계절에 대한 이야기
+           - 가벼운 시사 이야기
+           - 즐거운 추억
 
-    한 주제에 대해 1-2번 이상 질문하지 마세요. 새로운 주제로 자연스럽게 전환하세요.
+        3. **한 주제에 대해 1-2번 이상 질문하지 마세요. 새로운 주제로 자연스럽게 전환하세요.**
 
-    어르신의 답변에 1-2문장으로 짧게 반응하고 즉시 새로운 질문으로 넘어가세요.
+        4. **어르신의 답변에 1-2문장으로 짧게 반응하고 즉시 새로운 질문으로 넘어가세요.**
 
-    각 응답은 다음 구조를 따르세요:[짧은 반응] + [새로운 주제로의 질문]
+        5. 각 응답은 다음 구조를 따르세요:
+           [짧은 반응] + [새로운 주제로의 질문]
 
-    대화의 흐름을 자연스럽게 유지하되, 5개의 서로 다른 주제를 다루도록 하세요.
+        6. **대화의 흐름을 자연스럽게 유지하되, 5개의 서로 다른 주제를 다루도록 하세요.**
 
-    * 현재까지의 대화
-    
-"""
-
-val TALK_PROMPT2 = "다음 말들을 이어가봐. 단, 20자 이내로 최대한 짧게 이어가."
+        현재까지의 대화: 안녕하세요! 요즘 날씨 어떤가요?
+    """
 
 class TtsWrapper(context: Context) {
     private var tts: TextToSpeech? = null
@@ -202,7 +201,7 @@ fun Chat(
     val permissionNeeded by viewModel.permissionNeeded
     var isWaitingForAiResponse by remember { mutableStateOf(false) }
 
-    var accumulatedChat by remember { mutableStateOf(TALK_PROMPT2) } // 누적 텍스트
+    var accumulatedChat by remember { mutableStateOf(TALK_PROMPT) } // 누적 텍스트
 
     val apiTask = remember { ApiTask() }
     val coroutineScope = rememberCoroutineScope()
@@ -223,7 +222,7 @@ fun Chat(
                         Log.d("누적 텍스트??", accumulatedChat)
                         ttsWrapper.speakText(aiMessage)
                     } catch (e: Exception) {
-                        val errorMessage = "죄송합니다. 오류가 발생했습니다: ${e.message}"
+                        val errorMessage = "죄송합니다. 오류가 발생했습니다: ${e.message}, $message"
                         messages = messages + Pair(errorMessage, false)
                         ttsWrapper.speakText(errorMessage)
                     } finally {
@@ -240,7 +239,7 @@ fun Chat(
 
     LaunchedEffect(Unit) {
         viewModel.checkAndRequestAudioPermission()
-        addMessage("안녕하세요! 식사하셨나요?", false)
+        addMessage("안녕하세요! 요즘 날씨 어떤가요?", false)
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -296,7 +295,8 @@ fun Chat(
                     ChatBubble(
                         message = message,
                         isUser = isUser,
-                        fontSizeAdjustment = fontSizeAdjustment
+                        fontSizeAdjustment = fontSizeAdjustment,
+                        fontSizeViewModel = fontSizeViewModel
                     )
                 }
                 item {

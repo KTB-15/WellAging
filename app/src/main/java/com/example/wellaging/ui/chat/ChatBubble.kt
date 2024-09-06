@@ -19,9 +19,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.wellaging.FontSizeViewModel
 
 @Composable
-fun ChatBubble(message: String, isUser: Boolean, fontSizeAdjustment: Float) {
+fun ChatBubble(message: String, isUser: Boolean, fontSizeAdjustment: Float, fontSizeViewModel: FontSizeViewModel) {
+    val stepTextSize = (28f + fontSizeViewModel.fontSizeAdjustment.value).sp
+    val labelTextSize = (20f + fontSizeViewModel.fontSizeAdjustment.value).sp
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -40,7 +43,7 @@ fun ChatBubble(message: String, isUser: Boolean, fontSizeAdjustment: Float) {
                 Text(
                     text = "AI",
                     color = Color.White,
-                    fontSize = (16f + fontSizeAdjustment).sp // 글자 크기 조정
+                    fontSize = labelTextSize
                 )
             }
         }
@@ -57,7 +60,7 @@ fun ChatBubble(message: String, isUser: Boolean, fontSizeAdjustment: Float) {
             Text(
                 text = message,
                 color = if (isUser) Color.White else Color.Black,
-                fontSize = (16f + fontSizeAdjustment).sp // 글자 크기 조정
+                fontSize = labelTextSize // 글자 크기 조정
             )
         }
 
