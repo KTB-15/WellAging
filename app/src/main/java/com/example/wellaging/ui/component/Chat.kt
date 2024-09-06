@@ -162,7 +162,48 @@ fun SpeechRecognitionButton(
 
 data class ChatItem(val Q: String, val A: String)
 
+data class EvaluationResult(
+    val similarity: Double,
+    val result: String
+)
+
 class ApiTask {
+    suspend fun checkAnswer(message: String, userInput: String): EvaluationResult = withContext(Dispatchers.IO) {
+        val urlString = "http://54.180.249.97:8000/evaluateanswer"
+        val url = URL(urlString)
+        val connection = url.openConnection() as HttpURLConnection
+
+        try {
+            connection.requestMethod = "POST"
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.doOutput = true
+
+            val jsonInputString = JSONObject().apply {
+                put("message", message)
+                put("user_input", userInput)
+            }.toString()
+
+            connection.outputStream.use { os ->
+                val input = jsonInputString.toByteArray(charset("utf-8"))
+                os.write(input, 0, input.size)
+            }
+
+            if (connection.responseCode == HttpURLConnection.HTTP_OK) {
+                val response = connection.inputStream.bufferedReader().use { it.readText() }
+                val jsonResponse = JSONObject(response)
+                EvaluationResult(
+                    similarity = jsonResponse.getDouble("similarity"),
+                    result = jsonResponse.getString("result")
+                )
+            } else {
+                throw Exception("HTTP error code: ${connection.responseCode}")
+            }
+        } catch (e: Exception) {
+            throw Exception("Failed to evaluate answer: ${e.message}")
+        } finally {
+            connection.disconnect()
+        }
+    }
 
     // 문제 얻기
     suspend fun makeQnA(chatHistory: List<ChatItem>): String = withContext(Dispatchers.IO) {
