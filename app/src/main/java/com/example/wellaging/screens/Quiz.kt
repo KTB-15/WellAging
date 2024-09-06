@@ -32,6 +32,7 @@ import com.example.wellaging.ui.chat.MicButton
 import com.example.wellaging.ui.component.ApiTask
 import kotlinx.coroutines.launch
 
+
 @Composable
 fun Quiz(
     navController: NavHostController,
@@ -125,7 +126,7 @@ fun Quiz(
                     ChatBubble(
                         message = message,
                         isUser = isUser,
-                        fontSizeAdjustment = fontSizeAdjustment
+                        fontSizeAdjustment = fontSizeViewModel.fontSizeAdjustment.value
                     )
                 }
                 if (isWaitingForAiResponse) {
@@ -142,5 +143,4 @@ fun Quiz(
             MicButton(isListening = isListening, onMicClick = {onMicClick()})
         }
     }
-
 }
