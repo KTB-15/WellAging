@@ -1,5 +1,11 @@
 package com.example.wellaging
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.hardware.Sensor
+import android.hardware.SensorManager
+import android.os.Build
 import android.os.Bundle
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.activity.ComponentActivity
@@ -36,8 +42,31 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.font.FontWeight
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
+import androidx.compose.runtime.Composable
+import androidx.compose.material.Text
+import com.example.wellaging.ui.theme.WellAgingTheme
 
 class MainActivity : ComponentActivity() {
+    // 권한 요청 계약 생성
+    private val sensorManager by lazy {
+        getSystemService(Context.SENSOR_SERVICE) as SensorManager
+    }
+    private val sensor: Sensor? by lazy {
+        sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) }
+    // 권한 요청 계약 생성
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (!isGranted) {
+            // 권한이 거부되었을 때의 처리
+            finish()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -352,7 +381,11 @@ fun ChatScreen(navController: NavHostController) {
                 verticalArrangement = Arrangement.Top
             ) {
                 messages.forEach { (message, isUser) ->
-                    ChatBubble(message = message, isUser = isUser, fontSizeAdjustment = fontSizeAdjustment)
+                    ChatBubble(
+                        message = message,
+                        isUser = isUser,
+                        fontSizeAdjustment = fontSizeAdjustment
+                    )
                 }
             }
 
@@ -451,7 +484,6 @@ fun ChatBubble(message: String, isUser: Boolean, fontSizeAdjustment: Float) {
         }
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable
