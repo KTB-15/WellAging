@@ -1,6 +1,8 @@
 package com.example.wellaging.screens
 
 import android.Manifest
+import android.content.Context
+import android.speech.tts.TextToSpeech
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -17,6 +19,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,7 +40,9 @@ import com.example.wellaging.ui.chat.MicButton
 import com.example.wellaging.ui.component.ApiTask
 import com.example.wellaging.ui.component.ChatItem
 import kotlinx.coroutines.launch
+import org.json.JSONArray
 import org.json.JSONObject
+import java.util.Locale
 
 // 전역 퀴즈
 var quizs: MutableList<ChatItem> = mutableListOf()
@@ -48,56 +53,60 @@ fun Quiz(
     fontSizeViewModel: FontSizeViewModel,
     viewModel: ChatViewModel = viewModel()
 ) {
-    val stepTextSize = (28f + fontSizeViewModel.fontSizeAdjustment.value).sp
-    val labelTextSize = (20f + fontSizeViewModel.fontSizeAdjustment.value).sp
-
     var fontSizeAdjustment by remember { mutableStateOf(0f) }
     var messages by remember { mutableStateOf(listOf<Pair<String, Boolean>>()) }
     val recognizedText by viewModel.recognizedText
     val isListening by viewModel.isListening
     val permissionGranted by viewModel.permissionGranted
     val permissionNeeded by viewModel.permissionNeeded
+    var currentQuizIndex by remember { mutableStateOf(0) }
     var isWaitingForAiResponse by remember { mutableStateOf(false) }
+    var isChatEnded by remember { mutableStateOf(false) }
 
-    var accumulatedChat by remember { mutableStateOf(TALK_PROMPT) } // 누적 텍스트
-
-    val apiTask = remember { ApiTask() }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val ttsWrapper = rememberTtsWrapper(context)
+    val apiTask = remember { ApiTask() }
 
     val addMessage = remember {
         { message: String, isUser: Boolean ->
             messages = messages + Pair(message, isUser)
-            if (isUser) {
-                isWaitingForAiResponse = true
-                coroutineScope.launch {
-                    try {
-                        val aiResponse = apiTask.getUserInfo(accumulatedChat, message)
-                        val aiMessage = JSONObject(aiResponse).getString("body")
-                        messages = messages + Pair(aiMessage, false)
-                        accumulatedChat += "어르신: $message 당신: $aiMessage "
-                        Log.d("누적 텍스트??", accumulatedChat)
-                        ttsWrapper.speakText(aiMessage)
-                    } catch (e: Exception) {
-                        val errorMessage = "죄송합니다. 오류가 발생했습니다: ${e.message}"
-                        messages = messages + Pair(errorMessage, false)
-                        ttsWrapper.speakText(errorMessage)
-                    } finally {
-                        isWaitingForAiResponse = false
-                    }
-                }
-            } else {
-                accumulatedChat += "당신: $message "
+            if (!isUser) {
                 ttsWrapper.speakText(message)
             }
-            Log.d("누적 텍스트", accumulatedChat)
         }
     }
+    var currentAnswer = ""
 
     LaunchedEffect(Unit) {
         viewModel.checkAndRequestAudioPermission()
-        addMessage("안녕하세요! 식사하셨나요?", false)
+        if (quizs.isNotEmpty()) {
+            addMessage(quizs[currentQuizIndex].Q, false)
+        }
+    }
+    LaunchedEffect(recognizedText) {
+        if (recognizedText.isNotEmpty() && !isListening) {
+            addMessage(recognizedText, true)
+            isWaitingForAiResponse = true
+            coroutineScope.launch {
+                try {
+                    val response = apiTask.checkAnswer(quizs[currentQuizIndex].A, recognizedText)
+                    addMessage(response.result, false)
+
+                    currentQuizIndex++
+                    if (currentQuizIndex < quizs.size) {
+                        addMessage(quizs[currentQuizIndex].Q, false)
+                    } else {
+                        addMessage("모든 퀴즈가 끝났습니다. 수고하셨습니다!", false)
+                    }
+                } catch (e: Exception) {
+                    addMessage("죄송합니다. 오류가 발생했습니다: ${e.message}", false)
+                } finally {
+                    isWaitingForAiResponse = false
+                }
+            }
+            viewModel.clearRecognizedText()
+        }
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -106,16 +115,15 @@ fun Quiz(
         viewModel.onPermissionResult(isGranted)
     }
 
-    LaunchedEffect(recognizedText) {
-        if (recognizedText.isNotEmpty() && !isListening) {
-            addMessage(recognizedText, true)
-            viewModel.clearRecognizedText()
+    if (permissionNeeded) {
+        LaunchedEffect(permissionNeeded) {
+            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
         }
     }
 
     fun onMicClick() {
         when {
-            permissionGranted && !isWaitingForAiResponse -> {
+            permissionGranted && !isWaitingForAiResponse && !isChatEnded -> {
                 if (isListening) {
                     viewModel.stopListening()
                 } else {
@@ -153,7 +161,7 @@ fun Quiz(
                     ChatBubble(
                         message = message,
                         isUser = isUser,
-                        fontSizeAdjustment,
+                        fontSizeAdjustment = fontSizeAdjustment,
                         fontSizeViewModel = fontSizeViewModel
                     )
                 }
@@ -170,7 +178,7 @@ fun Quiz(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            MicButton(isListening = isListening, onMicClick = { onMicClick() })
+            MicButton(isListening = isListening, onMicClick = { onMicClick() }, enabled = !isChatEnded && permissionGranted && !isWaitingForAiResponse)
         }
     }
 
