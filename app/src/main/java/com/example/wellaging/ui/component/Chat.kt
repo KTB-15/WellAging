@@ -160,8 +160,9 @@ fun SpeechRecognitionButton(
     }
 }
 
+data class ChatItem(val Q: String, val A: String)
+
 class ApiTask {
-    data class ChatItem(val Q: String, val A: String)
 
     // 문제 얻기
     suspend fun makeQnA(chatHistory: List<ChatItem>): String = withContext(Dispatchers.IO) {
