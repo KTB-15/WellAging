@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.wellaging.FontSizeViewModel
@@ -43,6 +44,9 @@ fun Quiz(
     fontSizeViewModel: FontSizeViewModel,
     viewModel: ChatViewModel = viewModel()
 ) {
+    val stepTextSize = (28f + fontSizeViewModel.fontSizeAdjustment.value).sp
+    val labelTextSize = (20f + fontSizeViewModel.fontSizeAdjustment.value).sp
+
     var fontSizeAdjustment by remember { mutableStateOf(0f) }
     var messages by remember { mutableStateOf(listOf<Pair<String, Boolean>>()) }
     val recognizedText by viewModel.recognizedText
@@ -51,7 +55,7 @@ fun Quiz(
     val permissionNeeded by viewModel.permissionNeeded
     var isWaitingForAiResponse by remember { mutableStateOf(false) }
 
-    var accumulatedChat by remember { mutableStateOf(TALK_PROMPT2) } // 누적 텍스트
+    var accumulatedChat by remember { mutableStateOf(TALK_PROMPT) } // 누적 텍스트
 
     val apiTask = remember { ApiTask() }
     val coroutineScope = rememberCoroutineScope()
@@ -145,7 +149,8 @@ fun Quiz(
                     ChatBubble(
                         message = message,
                         isUser = isUser,
-                        fontSizeAdjustment = fontSizeAdjustment
+                        fontSizeAdjustment,
+                        fontSizeViewModel = fontSizeViewModel
                     )
                 }
                 item {
