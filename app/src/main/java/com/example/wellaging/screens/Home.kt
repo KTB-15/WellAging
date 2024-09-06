@@ -18,11 +18,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.wellaging.FontSizeViewModel
 import com.example.wellaging.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Home(navController: NavController) {
+fun Home(
+    navController: NavController,
+    fontSizeViewModel: FontSizeViewModel
+) {
 
     Scaffold(
         topBar = {
@@ -46,20 +50,21 @@ fun Home(navController: NavController) {
                 .padding(horizontal = 16.dp),
             contentAlignment = Alignment.Center
         ) {
-            SavingsProgress()
+            SavingsProgress(fontSizeViewModel)
         }
     }
 }
 
 @Composable
-fun SavingsProgress() {
+fun SavingsProgress(fontSizeViewModel: FontSizeViewModel) {
     val totalSteps = 10000f
     val currentSteps = 1876f
     val progressPercentage = currentSteps / totalSteps
     val sections = 4
 
-    val stepTextSize = 28.sp
-    val labelTextSize = 20.sp
+    val stepTextSize = (28f + fontSizeViewModel.fontSizeAdjustment.value).sp
+    val labelTextSize = (20f + fontSizeViewModel.fontSizeAdjustment.value).sp
+
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,

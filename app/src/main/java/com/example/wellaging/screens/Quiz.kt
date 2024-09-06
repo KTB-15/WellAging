@@ -25,9 +25,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.example.wellaging.FontSizeViewModel
 import com.example.wellaging.model.ChatViewModel
 import com.example.wellaging.ui.chat.ChatBubble
-import com.example.wellaging.ui.chat.ChatTopBar
 import com.example.wellaging.ui.chat.MicButton
 import com.example.wellaging.ui.component.ApiTask
 import kotlinx.coroutines.launch
@@ -35,6 +35,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun Quiz(
     navController: NavHostController,
+    fontSizeViewModel: FontSizeViewModel,
     viewModel: ChatViewModel = viewModel()
 ) {
     var fontSizeAdjustment by remember { mutableStateOf(0f) }
@@ -107,11 +108,6 @@ fun Quiz(
 
 
     Scaffold(
-        topBar = {
-            ChatTopBar(navController = navController, fontSizeAdjustment = fontSizeAdjustment, onFontSizeChange = {
-                fontSizeAdjustment = it
-            })
-        }
     ) { paddingValues ->
         Column(
             modifier = Modifier

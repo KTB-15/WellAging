@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Divider
-import androidx.compose.ui.Modifier
 import androidx.compose.material.Surface
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -27,18 +26,20 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+
+class FontSizeViewModel : ViewModel() {
+    var fontSizeAdjustment = mutableStateOf(16f) // Default font size
+}
 
 class MainActivity : ComponentActivity() {
 
@@ -54,7 +55,6 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (!isGranted) {
-            // 권한이 거부되었을 때의 처리
             finish()
         }
     }
@@ -63,28 +63,30 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-
             MaterialTheme {
-                // Obtain the ViewModel
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    // Obtain the ViewModel
+                    val fontSizeViewModel: FontSizeViewModel = viewModel()
 
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.background
-                    ) {
-                        Column {
-                            TopAppBarWithFontControl(
-                                onFontSizeIncrease = {
-                                    //fontSizeViewModel.fontSizeAdjustment.value += 2f
-                                },
-                                onFontSizeDecrease = {
-                                    //fontSizeViewModel.fontSizeAdjustment.value -= 2f
-                                }
-                            )
+                    Column {
+                        // Top bar with font control
+                        TopAppBarWithFontControl(
+                            fontSizeViewModel = fontSizeViewModel,
+                            onFontSizeIncrease = {
+                                fontSizeViewModel.fontSizeAdjustment.value += 2f
+                            },
+                            onFontSizeDecrease = {
+                                fontSizeViewModel.fontSizeAdjustment.value -= 2f
+                            }
+                        )
 
-                            BottomNavigationBar()
-                        }
+                        // Bottom navigation bar with screen switcher
+                        BottomNavigationBar(fontSizeViewModel)
                     }
-
+                }
             }
         }
     }
@@ -93,6 +95,7 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopAppBarWithFontControl(
+    fontSizeViewModel: FontSizeViewModel,
     onFontSizeIncrease: () -> Unit,
     onFontSizeDecrease: () -> Unit
 ) {
@@ -101,23 +104,23 @@ fun TopAppBarWithFontControl(
             title = {
                 Box(
                     modifier = Modifier
-                        .fillMaxHeight() // Fill the height of the TopAppBar
+                        .fillMaxHeight()
                         .fillMaxWidth(),
-                    contentAlignment = Alignment.CenterStart // Align content to center
+                    contentAlignment = Alignment.CenterStart
                 ) {
                     Text(
                         "WellAging",
                         fontSize = 24.sp,
                         color = Color(red = 255, green = 65, blue = 145),
-                        textAlign = TextAlign.Left // Center the text horizontally
+                        textAlign = TextAlign.Left
                     )
                 }
             },
             actions = {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center, // Align horizontally to center
-                    modifier = Modifier.fillMaxHeight() // Fill the height of the TopAppBar
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxHeight()
                 ) {
                     Text(
                         text = "가",
@@ -126,7 +129,6 @@ fun TopAppBarWithFontControl(
                         modifier = Modifier
                             .clickable { onFontSizeDecrease() }
                             .padding(horizontal = 8.dp)
-                            //.padding(horizontal = 8.dp)
                     )
                     Text(
                         text = "가",
@@ -134,16 +136,14 @@ fun TopAppBarWithFontControl(
                         color = Color(red = 255, green = 65, blue = 145),
                         modifier = Modifier
                             .clickable { onFontSizeIncrease() }
-                            //.padding(horizontal = 8.dp)
                     )
                 }
             },
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = Color.White
             ),
-            modifier = Modifier.height(60.dp) // Adjust the height of the TopAppBar
+            modifier = Modifier.height(60.dp)
         )
-        // Add a divider below the TopAppBar
         Divider(color = Color.LightGray, thickness = 0.5.dp)
     }
 }
