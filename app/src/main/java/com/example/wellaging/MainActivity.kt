@@ -37,12 +37,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.wellaging.model.ChatViewModel
-import com.example.wellaging.ui.BottomNavigation
-import com.example.wellaging.ui.ChatBubble
-import com.example.wellaging.ui.ChatTopBar
-import com.example.wellaging.ui.MicButton
-import com.example.wellaging.ui.SavingsProgress
-import com.example.wellaging.ui.TopAppBarWithFontControl
+import com.example.wellaging.ui.sinhan.BottomNavigation
+import com.example.wellaging.ui.sinhan.ChatBubble
+import com.example.wellaging.ui.sinhan.ChatTopBar
+import com.example.wellaging.ui.sinhan.MicButton
+import com.example.wellaging.ui.sinhan.SavingsProgress
+import com.example.wellaging.ui.sinhan.TopAppBarWithFontControl
 
 class MainActivity : ComponentActivity() {
     // 권한 요청 계약 생성

@@ -1,4 +1,4 @@
-package com.example.wellaging.ui
+package com.example.wellaging.ui.sinhan
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row

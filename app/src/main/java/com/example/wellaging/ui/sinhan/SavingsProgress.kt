@@ -1,4 +1,4 @@
-package com.example.wellaging.ui
+package com.example.wellaging.ui.sinhan
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
