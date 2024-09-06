@@ -1,30 +1,22 @@
 package com.example.wellaging.ui.component
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.wellaging.ui.theme.Pink80
+import com.example.wellaging.ui.theme.PinkTemp
+
+data class ChatMessage(
+    val text: String,
+    val isUser: Boolean
+)
 
 @Composable
 fun ChatList(messages: List<String>) {
@@ -44,13 +36,13 @@ fun ChatList(messages: List<String>) {
 fun ChatTextBox(message: String) {
     Surface(
         shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surface,
+        color = Pink80,
         tonalElevation = 1.dp,
         modifier = Modifier.padding(vertical = 4.dp)
     ) {
         Text(
             text = message,
-            style = MaterialTheme.typography.bodyMedium,
+            fontSize = 28.sp,
             modifier = Modifier.padding(8.dp)
         )
     }
@@ -88,23 +80,39 @@ fun InputContainer(
         Spacer(modifier = Modifier.height(8.dp))
 
         Row(
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.height(56.dp)
         ) {
             TextField(
                 value = inputText,
                 onValueChange = { inputText = it },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+                shape = RoundedCornerShape(32.dp),
+                colors = TextFieldDefaults.colors(
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedIndicatorColor = Color.Transparent,  // 밑줄 제거
+                    focusedIndicatorColor = Color.Transparent     // 포커스 시 밑줄 제거
+                ),
+                placeholder = { Text("글자를 입력하세요", fontSize = 20.sp) }
             )
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(20.dp))
 
-            Button(onClick = {
-                if (inputText.isNotEmpty()) {
-                    onChatSubmit(inputText)
-                    inputText = ""
+            Button(
+                colors = ButtonDefaults.buttonColors(
+                    PinkTemp
+                ),
+                onClick = {
+                    if (inputText.isNotEmpty()) {
+                        onChatSubmit(inputText)
+                        inputText = ""
+                    }
                 }
-            }) {
-                Text("등록")
+            ) {
+                Text("등록", fontSize = 28.sp, color = Color.Black)
             }
         }
     }
@@ -122,6 +130,6 @@ fun SpeechRecognitionButton(
             containerColor = if (isListening) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
         )
     ) {
-        Text(if (isListening) "말하기 종료" else "말하기")
+        Text(if (isListening) "말하기 종료" else "말하기", fontSize = 28.sp)
     }
 }
