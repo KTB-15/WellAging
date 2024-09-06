@@ -13,24 +13,24 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.example.wellaging.model.ChatViewModel
 import com.example.wellaging.ui.chat.ChatBubble
 import com.example.wellaging.ui.chat.ChatTopBar
 import com.example.wellaging.ui.chat.MicButton
 import com.example.wellaging.ui.component.ApiTask
+import kotlinx.coroutines.launch
 
 @Composable
 fun Quiz(
@@ -45,14 +45,25 @@ fun Quiz(
     val permissionNeeded by viewModel.permissionNeeded
     var isWaitingForAiResponse by remember { mutableStateOf(false) }
 
-    fun addMessage(message: String, isUser: Boolean) {
-        messages = messages + Pair(message, isUser)
-        if (isUser) {
-            isWaitingForAiResponse = true
-            ApiTask { aiResponse ->
-                addMessage(aiResponse, false)
-                isWaitingForAiResponse = false
-            }.execute(message)
+    val apiTask = remember { ApiTask() }
+    val coroutineScope = rememberCoroutineScope()
+
+    val addMessage = remember {
+        { message: String, isUser: Boolean ->
+            messages = messages + Pair(message, isUser)
+            if (isUser) {
+                isWaitingForAiResponse = true
+                coroutineScope.launch {
+                    try {
+                        val aiResponse = apiTask.getUserInfo("AI 응답을 생성해주세요", message)
+                        messages = messages + Pair(aiResponse, false)
+                    } catch (e: Exception) {
+                        messages = messages + Pair("죄송합니다. 오류가 발생했습니다: ${e.message}", false)
+                    } finally {
+                        isWaitingForAiResponse = false
+                    }
+                }
+            }
         }
     }
 

@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -18,6 +20,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,6 +32,7 @@ import com.example.wellaging.ui.chat.ChatBubble
 import com.example.wellaging.ui.chat.ChatTopBar
 import com.example.wellaging.ui.chat.MicButton
 import com.example.wellaging.ui.component.ApiTask
+import kotlinx.coroutines.launch
 
 @Composable
 fun Chat(
@@ -43,14 +47,25 @@ fun Chat(
     val permissionNeeded by viewModel.permissionNeeded
     var isWaitingForAiResponse by remember { mutableStateOf(false) }
 
-    fun addMessage(message: String, isUser: Boolean) {
-        messages = messages + Pair(message, isUser)
-        if (isUser) {
-            isWaitingForAiResponse = true
-            ApiTask { aiResponse ->
-                addMessage(aiResponse, false)
-                isWaitingForAiResponse = false
-            }.execute(message)
+    val apiTask = remember { ApiTask() }
+    val coroutineScope = rememberCoroutineScope()
+
+    val addMessage = remember {
+        { message: String, isUser: Boolean ->
+            messages = messages + Pair(message, isUser)
+            if (isUser) {
+                isWaitingForAiResponse = true
+                coroutineScope.launch {
+                    try {
+                        val aiResponse = apiTask.getUserInfo("AI 응답을 생성해주세요", message)
+                        messages = messages + Pair(aiResponse, false)
+                    } catch (e: Exception) {
+                        messages = messages + Pair("죄송합니다. 오류가 발생했습니다: ${e.message}", false)
+                    } finally {
+                        isWaitingForAiResponse = false
+                    }
+                }
+            }
         }
     }
 
@@ -105,20 +120,20 @@ fun Chat(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp)
+        ) {LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.Top
         ) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.Top
-            ) {
-                messages.forEach { (message, isUser) ->
-                    ChatBubble(
-                        message = message,
-                        isUser = isUser,
-                        fontSizeAdjustment = fontSizeAdjustment
-                    )
-                }
+            items(messages) { (message, isUser) ->
+                ChatBubble(
+                    message = message,
+                    isUser = isUser,
+                    fontSizeAdjustment = fontSizeAdjustment
+                )
+            }
+            item {
                 if (isWaitingForAiResponse) {
                     CircularProgressIndicator(
                         modifier = Modifier
@@ -127,6 +142,7 @@ fun Chat(
                     )
                 }
             }
+        }
 
             Spacer(modifier = Modifier.height(16.dp))
 
