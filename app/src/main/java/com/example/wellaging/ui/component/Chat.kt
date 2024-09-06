@@ -10,23 +10,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.wellaging.ui.theme.Pink80
-import com.example.wellaging.ui.theme.PinkTemp
+import com.example.wellaging.ui.theme.Purple40
 
 data class ChatMessage(
     val text: String,
-    val isUser: Boolean
+    val isUser: Boolean = false
 )
 
 @Composable
-fun ChatList(messages: List<String>) {
+fun ChatList(messages: List<ChatMessage>) {
     LazyColumn {
         items(messages) { message ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = if (message.isUser) Arrangement.End else Arrangement.Start
             ) {
-                ChatTextBox(message = message)
+                ChatTextBox(message = message.text)
             }
         }
     }
@@ -36,7 +35,7 @@ fun ChatList(messages: List<String>) {
 fun ChatTextBox(message: String) {
     Surface(
         shape = MaterialTheme.shapes.medium,
-        color = Pink80,
+        color = Purple40,
         tonalElevation = 1.dp,
         modifier = Modifier.padding(vertical = 4.dp)
     ) {
@@ -103,7 +102,7 @@ fun InputContainer(
 
             Button(
                 colors = ButtonDefaults.buttonColors(
-                    PinkTemp
+                    Purple40
                 ),
                 onClick = {
                     if (inputText.isNotEmpty()) {

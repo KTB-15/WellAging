@@ -128,6 +128,7 @@ class ChatActivity : ComponentActivity() {
         super.onDestroy()
     }
 }
+
 @Composable
 fun ChatScreen(
     onStartListening: () -> Unit,
@@ -135,14 +136,14 @@ fun ChatScreen(
     recognizedText: String,
     onChatSubmit: (String) -> Unit
 ) {
-    var chatMessages by remember { mutableStateOf(listOf<String>()) }
+    var chatMessages by remember { mutableStateOf(listOf<ChatMessage>()) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        ChatTextBox(message = "안녕하세요~ 아침은 드셨나요?")
+        ChatTextBox(message = "안녕?")
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -156,7 +157,7 @@ fun ChatScreen(
             recognizedText = recognizedText,
             onChatSubmit = { message ->
                 onChatSubmit(message)
-                chatMessages = chatMessages + message
+                chatMessages = chatMessages + ChatMessage(message, true)
             }
         )
     }
