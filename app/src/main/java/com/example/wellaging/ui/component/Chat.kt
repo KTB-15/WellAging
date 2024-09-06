@@ -171,8 +171,8 @@ class ApiTask {
             connection.doOutput = true
 
             val jsonInputString = JSONObject().apply {
-                put("prompt", URLEncoder.encode(prompt, "UTF-8"))
-                put("user_input", URLEncoder.encode(userInput, "UTF-8"))
+                put("prompt", prompt)
+                put("user_input", userInput)
             }.toString()
 
             connection.outputStream.use { os ->
