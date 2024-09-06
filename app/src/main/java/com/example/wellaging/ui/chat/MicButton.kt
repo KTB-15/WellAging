@@ -1,4 +1,4 @@
-package com.example.wellaging.ui.sinhan
+package com.example.wellaging.ui.chat
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,7 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun MicButton(isListening: Boolean, onMicClick: () -> Unit) {
+fun MicButton(isListening: Boolean, onMicClick: () -> Unit, enabled: Boolean = true) {
     Row(
         modifier = Modifier
             .fillMaxWidth(),
@@ -30,8 +30,11 @@ fun MicButton(isListening: Boolean, onMicClick: () -> Unit) {
             modifier = Modifier
                 .size(56.dp)
                 .clip(CircleShape)
-                .background(Color(red = 255, green = 65, blue = 145))
-                .clickable { onMicClick() },
+                .background(
+                    if (enabled) Color(red = 255, green = 65, blue = 145)
+                    else Color.Gray
+                )
+                .clickable(enabled = enabled, onClick = onMicClick),
             contentAlignment = Alignment.Center
         ) {
             Icon(

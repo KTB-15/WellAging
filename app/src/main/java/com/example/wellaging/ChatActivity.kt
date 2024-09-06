@@ -163,7 +163,7 @@ fun ChatScreen(
                     isWaitingForResponse = true
 
                     // API 호출
-                    GptApiTask { response ->
+                    ApiTask { response ->
                         chatMessages = chatMessages + ChatMessage(response, false)
                         isWaitingForResponse = false
                     }.execute(message)
