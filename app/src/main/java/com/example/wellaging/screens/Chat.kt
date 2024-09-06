@@ -68,6 +68,7 @@ val TALK_PROMPT =
 
         현재까지의 대화: 안녕하세요! 요즘 날씨 어떤가요?
     """
+val TALK_PROMPT_LENGTH = TALK_PROMPT.length
 
 class TtsWrapper(context: Context) {
     private var tts: TextToSpeech? = null
@@ -132,59 +133,6 @@ fun rememberTtsWrapper(context: Context): TtsWrapper {
     }
 
     return ttsWrapper
-}
-
-@Composable
-fun rememberTextToSpeech(context: Context): Pair<TextToSpeech?, Boolean> {
-    var tts by remember { mutableStateOf<TextToSpeech?>(null) }
-    var isReady by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
-
-    LaunchedEffect(context) {
-        var localTextToSpeechInstance: TextToSpeech? = null
-
-        localTextToSpeechInstance = TextToSpeech(context) { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                coroutineScope.launch(Dispatchers.Main) {
-                    tts = localTextToSpeechInstance
-                    localTextToSpeechInstance?.let {
-                        setKoreanLanguage(it)
-                        isReady = true
-                    }
-                }
-            } else {
-                Log.e("TTSSTTSS", "Failed to initialize TextToSpeech. Status: $status")
-            }
-        }
-    }
-
-    return Pair(tts, isReady)
-}
-
-// TTS 함수
-fun TextToSpeech?.speakText(text: String, isReady: Boolean) {
-    this?.let { ttsInstance ->
-        if (ttsInstance.isSpeaking) {
-            Log.e("TTSSTTSS", "Already Speaking")
-            ttsInstance.stop()
-        }
-        // 초기화 완료 확인
-        if (ttsInstance.isLanguageAvailable(Locale.KOREAN) >= TextToSpeech.LANG_AVAILABLE) {
-            ttsInstance.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
-            Log.i("TTSSTTSS", "Speak Successfully")
-        } else {
-            Log.e("TTSSTTSS", "Korean language is not available")
-        }
-    } ?: Log.e("TTSSTTSS", "TextToSpeech instance is null")
-}
-
-private fun setKoreanLanguage(tts: TextToSpeech) {
-    val result = tts.setLanguage(Locale.KOREAN)
-    if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-        Log.e("TTSSTTSS", "Korean language is not supported or missing")
-    } else {
-        Log.d("TTSSTTSS", "TextToSpeech initialized successfully with Korean language")
-    }
 }
 
 @Composable
