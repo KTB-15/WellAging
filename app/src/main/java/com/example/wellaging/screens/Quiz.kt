@@ -1,6 +1,7 @@
 package com.example.wellaging.screens
 
 import android.Manifest
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -11,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -22,6 +25,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -31,7 +35,7 @@ import com.example.wellaging.ui.chat.ChatBubble
 import com.example.wellaging.ui.chat.MicButton
 import com.example.wellaging.ui.component.ApiTask
 import kotlinx.coroutines.launch
-
+import org.json.JSONObject
 
 @Composable
 fun Quiz(
@@ -47,8 +51,12 @@ fun Quiz(
     val permissionNeeded by viewModel.permissionNeeded
     var isWaitingForAiResponse by remember { mutableStateOf(false) }
 
+    var accumulatedChat by remember { mutableStateOf(TALK_PROMPT2) } // 누적 텍스트
+
     val apiTask = remember { ApiTask() }
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val ttsWrapper = rememberTtsWrapper(context)
 
     val addMessage = remember {
         { message: String, isUser: Boolean ->
@@ -57,21 +65,31 @@ fun Quiz(
                 isWaitingForAiResponse = true
                 coroutineScope.launch {
                     try {
-                        val aiResponse = apiTask.getUserInfo("AI 응답을 생성해주세요", message)
-                        messages = messages + Pair(aiResponse, false)
+                        val aiResponse = apiTask.getUserInfo(accumulatedChat, message)
+                        val aiMessage = JSONObject(aiResponse).getString("body")
+                        messages = messages + Pair(aiMessage, false)
+                        accumulatedChat += "어르신: $message 당신: $aiMessage "
+                        Log.d("누적 텍스트??", accumulatedChat)
+                        ttsWrapper.speakText(aiMessage)
                     } catch (e: Exception) {
-                        messages = messages + Pair("죄송합니다. 오류가 발생했습니다: ${e.message}", false)
+                        val errorMessage = "죄송합니다. 오류가 발생했습니다: ${e.message}"
+                        messages = messages + Pair(errorMessage, false)
+                        ttsWrapper.speakText(errorMessage)
                     } finally {
                         isWaitingForAiResponse = false
                     }
                 }
+            } else {
+                accumulatedChat += "당신: $message "
+                ttsWrapper.speakText(message)
             }
+            Log.d("누적 텍스트", accumulatedChat)
         }
     }
 
     LaunchedEffect(Unit) {
         viewModel.checkAndRequestAudioPermission()
-        addMessage("안녕하세요~", false)
+        addMessage("안녕하세요! 식사하셨나요?", false)
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -96,6 +114,7 @@ fun Quiz(
                     viewModel.startListening()
                 }
             }
+
             permissionNeeded -> {
                 permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
             }
@@ -116,31 +135,34 @@ fun Quiz(
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
-            Column(
+            LazyColumn(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth(),
                 verticalArrangement = Arrangement.Top
             ) {
-                messages.forEach { (message, isUser) ->
+                items(messages) { (message, isUser) ->
                     ChatBubble(
                         message = message,
                         isUser = isUser,
-                        fontSizeAdjustment = fontSizeViewModel.fontSizeAdjustment.value
+                        fontSizeAdjustment = fontSizeAdjustment
                     )
                 }
-                if (isWaitingForAiResponse) {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .align(Alignment.CenterHorizontally)
-                    )
+                item {
+                    if (isWaitingForAiResponse) {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .align(Alignment.CenterHorizontally)
+                        )
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            MicButton(isListening = isListening, onMicClick = {onMicClick()})
+            MicButton(isListening = isListening, onMicClick = { onMicClick() })
         }
     }
+
 }
