@@ -16,12 +16,12 @@ data class BottomNavigationItem(
         return listOf(
             BottomNavigationItem(
                 label = "Chat",
-                icon = Icons.Filled.Search,
+                icon = Icons.Filled.ChatBubble,
                 route = Screens.Chat.route
             ),
             BottomNavigationItem(
                 label = "Quiz",
-                icon = Icons.Filled.AccountCircle,
+                icon = Icons.Filled.Quiz,
                 route = Screens.Quiz.route
             ),
             BottomNavigationItem(
@@ -31,12 +31,12 @@ data class BottomNavigationItem(
             ),
             BottomNavigationItem(
                 label = "Pay",
-                icon = Icons.Filled.AccountCircle,
+                icon = Icons.Filled.Money,
                 route = Screens.Pay.route
             ),
             BottomNavigationItem(
                 label = "History",
-                icon = Icons.Filled.AccountCircle,
+                icon = Icons.Filled.History,
                 route = Screens.History.route
             ),
         )
