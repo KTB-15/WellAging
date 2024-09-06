@@ -1,4 +1,4 @@
-package com.example.wellaging.ui.sinhan
+package com.example.wellaging.ui.chat
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement

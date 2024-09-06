@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -21,12 +20,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.example.wellaging.model.ChatViewModel
-import com.example.wellaging.ui.sinhan.ChatBubble
-import com.example.wellaging.ui.sinhan.ChatTopBar
-import com.example.wellaging.ui.sinhan.MicButton
+import com.example.wellaging.ui.chat.ChatBubble
+import com.example.wellaging.ui.chat.ChatTopBar
+import com.example.wellaging.ui.chat.MicButton
 
 @Composable
 fun Chat(
