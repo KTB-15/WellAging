@@ -68,6 +68,7 @@ val TALK_PROMPT =
 
         현재까지의 대화: 안녕하세요! 요즘 날씨 어떤가요?
     """
+val TALK_PROMPT_LENGTH = TALK_PROMPT.length
 
 class TtsWrapper(context: Context) {
     private var tts: TextToSpeech? = null
@@ -135,66 +136,13 @@ fun rememberTtsWrapper(context: Context): TtsWrapper {
 }
 
 @Composable
-fun rememberTextToSpeech(context: Context): Pair<TextToSpeech?, Boolean> {
-    var tts by remember { mutableStateOf<TextToSpeech?>(null) }
-    var isReady by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
-
-    LaunchedEffect(context) {
-        var localTextToSpeechInstance: TextToSpeech? = null
-
-        localTextToSpeechInstance = TextToSpeech(context) { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                coroutineScope.launch(Dispatchers.Main) {
-                    tts = localTextToSpeechInstance
-                    localTextToSpeechInstance?.let {
-                        setKoreanLanguage(it)
-                        isReady = true
-                    }
-                }
-            } else {
-                Log.e("TTSSTTSS", "Failed to initialize TextToSpeech. Status: $status")
-            }
-        }
-    }
-
-    return Pair(tts, isReady)
-}
-
-// TTS 함수
-fun TextToSpeech?.speakText(text: String, isReady: Boolean) {
-    this?.let { ttsInstance ->
-        if (ttsInstance.isSpeaking) {
-            Log.e("TTSSTTSS", "Already Speaking")
-            ttsInstance.stop()
-        }
-        // 초기화 완료 확인
-        if (ttsInstance.isLanguageAvailable(Locale.KOREAN) >= TextToSpeech.LANG_AVAILABLE) {
-            ttsInstance.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
-            Log.i("TTSSTTSS", "Speak Successfully")
-        } else {
-            Log.e("TTSSTTSS", "Korean language is not available")
-        }
-    } ?: Log.e("TTSSTTSS", "TextToSpeech instance is null")
-}
-
-private fun setKoreanLanguage(tts: TextToSpeech) {
-    val result = tts.setLanguage(Locale.KOREAN)
-    if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-        Log.e("TTSSTTSS", "Korean language is not supported or missing")
-    } else {
-        Log.d("TTSSTTSS", "TextToSpeech initialized successfully with Korean language")
-    }
-}
-
-@Composable
 fun Chat(
     navController: NavHostController,
     fontSizeViewModel: FontSizeViewModel,
     viewModel: ChatViewModel = viewModel()
 ) {
     var fontSizeAdjustment by remember { mutableStateOf(0f) }
-    var messages by remember { mutableStateOf(listOf<Pair<String, Boolean>>()) }
+    var messages by remember { mutableStateOf(listOf<Pair<String, Boolean>>()) } // ChatBubble
     val recognizedText by viewModel.recognizedText
     val isListening by viewModel.isListening
     val permissionGranted by viewModel.permissionGranted
@@ -202,6 +150,7 @@ fun Chat(
     var isWaitingForAiResponse by remember { mutableStateOf(false) }
 
     var accumulatedChat by remember { mutableStateOf(TALK_PROMPT) } // 누적 텍스트
+    var isChatEnded by remember { mutableStateOf(false) }
 
     val apiTask = remember { ApiTask() }
     val coroutineScope = rememberCoroutineScope()
@@ -221,6 +170,13 @@ fun Chat(
                         accumulatedChat += "어르신: $message 당신: $aiMessage "
                         Log.d("누적 텍스트??", accumulatedChat)
                         ttsWrapper.speakText(aiMessage)
+
+                        // 대화 길이 초과시 종료
+                        if (accumulatedChat.length - TALK_PROMPT_LENGTH >= 400) {
+                            messages = messages + Pair("대화가 종료되었습니다. 감사합니다.", false)
+                            ttsWrapper.speakText("대화가 종료되었습니다. 감사합니다.")
+                            isChatEnded = true
+                        }
                     } catch (e: Exception) {
                         val errorMessage = "죄송합니다. 오류가 발생했습니다: ${e.message}, $message"
                         messages = messages + Pair(errorMessage, false)
@@ -257,7 +213,7 @@ fun Chat(
 
     fun onMicClick() {
         when {
-            permissionGranted && !isWaitingForAiResponse -> {
+            permissionGranted && !isWaitingForAiResponse && !isChatEnded -> {
                 if (isListening) {
                     viewModel.stopListening()
                 } else {
@@ -312,7 +268,7 @@ fun Chat(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            MicButton(isListening = isListening, onMicClick = { onMicClick() })
+            MicButton(isListening = isListening, onMicClick = { onMicClick() }, enabled = !isChatEnded && permissionGranted && !isWaitingForAiResponse)
         }
     }
 
