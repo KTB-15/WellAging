@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import com.example.wellaging.ui.theme.Purple40
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
@@ -160,6 +161,47 @@ fun SpeechRecognitionButton(
 }
 
 class ApiTask {
+    data class ChatItem(val Q: String, val A: String)
+
+    // 문제 얻기
+    suspend fun makeQnA(chatHistory: List<ChatItem>): String = withContext(Dispatchers.IO) {
+        val urlString = "http://54.180.249.97:8000/makeqna"
+        val url = URL(urlString)
+        val connection = url.openConnection() as HttpURLConnection
+
+        try {
+            connection.requestMethod = "POST"
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.doOutput = true
+
+            val jsonInputString = JSONObject().apply {
+                put("chat_history", JSONArray().apply {
+                    chatHistory.forEach { chatItem ->
+                        put(JSONObject().apply {
+                            put("Q", chatItem.Q)
+                            put("A", chatItem.A)
+                        })
+                    }
+                })
+            }.toString()
+
+            connection.outputStream.use { os ->
+                val input = jsonInputString.toByteArray(charset("utf-8"))
+                os.write(input, 0, input.size)
+            }
+
+            if (connection.responseCode == HttpURLConnection.HTTP_OK) {
+                connection.inputStream.bufferedReader().use { it.readText() }
+            } else {
+                "Error: ${connection.responseCode}"
+            }
+        } catch (e: Exception) {
+            "죄송합니다. 응답을 받아오는 데 문제가 발생했습니다: ${e.message}"
+        } finally {
+            connection.disconnect()
+        }
+    }
+
     suspend fun getUserInfo(prompt: String, userInput: String): String = withContext(Dispatchers.IO) {
         val urlString = "http://54.180.249.97:8000/getuserinfo"
         val url = URL(urlString)
