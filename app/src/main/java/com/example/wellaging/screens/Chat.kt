@@ -142,7 +142,7 @@ fun Chat(
     viewModel: ChatViewModel = viewModel()
 ) {
     var fontSizeAdjustment by remember { mutableStateOf(0f) }
-    var messages by remember { mutableStateOf(listOf<Pair<String, Boolean>>()) }
+    var messages by remember { mutableStateOf(listOf<Pair<String, Boolean>>()) } // ChatBubble
     val recognizedText by viewModel.recognizedText
     val isListening by viewModel.isListening
     val permissionGranted by viewModel.permissionGranted
@@ -150,6 +150,7 @@ fun Chat(
     var isWaitingForAiResponse by remember { mutableStateOf(false) }
 
     var accumulatedChat by remember { mutableStateOf(TALK_PROMPT) } // 누적 텍스트
+    var isChatEnded by remember { mutableStateOf(false) }
 
     val apiTask = remember { ApiTask() }
     val coroutineScope = rememberCoroutineScope()
@@ -169,6 +170,13 @@ fun Chat(
                         accumulatedChat += "어르신: $message 당신: $aiMessage "
                         Log.d("누적 텍스트??", accumulatedChat)
                         ttsWrapper.speakText(aiMessage)
+
+                        // 대화 길이 초과시 종료
+                        if (accumulatedChat.length - TALK_PROMPT_LENGTH >= 400) {
+                            messages = messages + Pair("대화가 종료되었습니다. 감사합니다.", false)
+                            ttsWrapper.speakText("대화가 종료되었습니다. 감사합니다.")
+                            isChatEnded = true
+                        }
                     } catch (e: Exception) {
                         val errorMessage = "죄송합니다. 오류가 발생했습니다: ${e.message}, $message"
                         messages = messages + Pair(errorMessage, false)
@@ -205,7 +213,7 @@ fun Chat(
 
     fun onMicClick() {
         when {
-            permissionGranted && !isWaitingForAiResponse -> {
+            permissionGranted && !isWaitingForAiResponse && !isChatEnded -> {
                 if (isListening) {
                     viewModel.stopListening()
                 } else {
@@ -260,7 +268,7 @@ fun Chat(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            MicButton(isListening = isListening, onMicClick = { onMicClick() })
+            MicButton(isListening = isListening, onMicClick = { onMicClick() }, enabled = !isChatEnded && permissionGranted && !isWaitingForAiResponse)
         }
     }
 
