@@ -1,6 +1,7 @@
 package com.example.wellaging.screens
 
 import android.Manifest
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -56,7 +57,8 @@ val TALK_PROMPT = """
 
     대화의 흐름을 자연스럽게 유지하되, 5개의 서로 다른 주제를 다루도록 하세요.
 
-    현재까지의 대화: 안녕하세요! 식사하셨나요?
+    * 현재까지의 대화
+    
 """
 
 @Composable
@@ -80,8 +82,9 @@ fun Chat(
 
     val addMessage = remember {
         { message: String, isUser: Boolean ->
+            Log.d("누적 텍스트", accumulatedChat)
             messages = messages + Pair(message, isUser)
-            accumulatedChat += if (isUser) "User: $message\n" else "AI: $message\n"
+            accumulatedChat += "당신: $message "
 
             if (isUser) {
                 isWaitingForAiResponse = true
@@ -89,11 +92,10 @@ fun Chat(
                     try {
                         val aiResponse = apiTask.getUserInfo(accumulatedChat, message)
                         messages = messages + Pair(aiResponse, false)
-                        accumulatedChat += "AI: $aiResponse\n"
+                        accumulatedChat += "어르신: $message"
                     } catch (e: Exception) {
                         val errorMessage = "죄송합니다. 오류가 발생했습니다: ${e.message}"
                         messages = messages + Pair(errorMessage, false)
-                        accumulatedChat += "AI: $errorMessage\n"
                     } finally {
                         isWaitingForAiResponse = false
                     }
