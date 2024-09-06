@@ -17,7 +17,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 
 @Composable
-fun BottomNavigationBar() {
+fun BottomNavigationBar(fontSizeViewModel: FontSizeViewModel) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -57,27 +57,32 @@ fun BottomNavigationBar() {
             modifier = Modifier.padding(paddingValues = paddingValues)) {
             composable(Screens.Home.route) {
                 Home(
-                    navController
+                    navController,
+                    fontSizeViewModel
                 )
             }
             composable(Screens.History.route) {
                 History(
-                    navController
+                    navController,
+                    fontSizeViewModel
                 )
             }
             composable(Screens.Chat.route) {
                 Chat(
-                    navController
+                    navController,
+                    fontSizeViewModel
                 )
             }
             composable(Screens.Pay.route) {
                 Pay(
-                    navController
+                    navController,
+                    fontSizeViewModel
                 )
             }
             composable(Screens.Quiz.route) {
                 Quiz(
-                    navController
+                    navController,
+                    fontSizeViewModel
                 )
             }
 

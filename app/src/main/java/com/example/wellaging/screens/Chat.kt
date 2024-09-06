@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import com.example.wellaging.FontSizeViewModel
 import com.example.wellaging.model.ChatViewModel
 import com.example.wellaging.ui.sinhan.ChatBubble
 import com.example.wellaging.ui.sinhan.ChatTopBar
@@ -31,6 +32,7 @@ import com.example.wellaging.ui.sinhan.MicButton
 @Composable
 fun Chat(
     navController: NavHostController,
+    fontSizeViewModel: FontSizeViewModel,
     viewModel: ChatViewModel = viewModel()
 ) {
     var fontSizeAdjustment by remember { mutableStateOf(0f) }
