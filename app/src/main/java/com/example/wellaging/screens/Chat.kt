@@ -34,6 +34,7 @@ import com.example.wellaging.ui.chat.ChatBubble
 import com.example.wellaging.ui.chat.MicButton
 import com.example.wellaging.ui.component.ApiTask
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 
 val TALK_PROMPT = """
     당신은 어르신과 친근하게 대화를 나누는 상대입니다. 
@@ -82,16 +83,15 @@ fun Chat(
 
     val addMessage = remember {
         { message: String, isUser: Boolean ->
-            Log.d("누적 텍스트", accumulatedChat)
             messages = messages + Pair(message, isUser)
             accumulatedChat += "당신: $message "
-
             if (isUser) {
                 isWaitingForAiResponse = true
                 coroutineScope.launch {
                     try {
                         val aiResponse = apiTask.getUserInfo(accumulatedChat, message)
-                        messages = messages + Pair(aiResponse, false)
+                        val aiMessage = JSONObject(aiResponse).getString("body")
+                        messages = messages + Pair(aiMessage, false)
                         accumulatedChat += "어르신: $message"
                     } catch (e: Exception) {
                         val errorMessage = "죄송합니다. 오류가 발생했습니다: ${e.message}"
@@ -101,6 +101,7 @@ fun Chat(
                     }
                 }
             }
+            Log.d("누적 텍스트", accumulatedChat)
         }
     }
 
