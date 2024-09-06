@@ -1,5 +1,6 @@
 package com.example.wellaging.ui.component
 
+import android.os.AsyncTask
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,6 +12,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.wellaging.ui.theme.Purple40
+import java.net.HttpURLConnection
+import java.net.URL
+import java.net.URLEncoder
 
 data class ChatMessage(
     val text: String,
@@ -52,14 +56,16 @@ fun InputContainer(
     onStartListening: () -> Unit,
     onStopListening: () -> Unit,
     recognizedText: String,
-    onChatSubmit: (String) -> Unit
+    onChatSubmit: (String) -> Unit,
+    inputText: String,
+    onInputTextChange: (String) -> Unit,
+    isWaitingForResponse: Boolean
 ) {
-    var inputText by remember { mutableStateOf("") }
     var isListening by remember { mutableStateOf(false) }
 
     LaunchedEffect(recognizedText) {
         if (recognizedText.isNotEmpty()) {
-            inputText = recognizedText
+            onInputTextChange(recognizedText)
         }
     }
 
@@ -84,7 +90,7 @@ fun InputContainer(
         ) {
             TextField(
                 value = inputText,
-                onValueChange = { inputText = it },
+                onValueChange = onInputTextChange,
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight(),
@@ -105,11 +111,9 @@ fun InputContainer(
                     Purple40
                 ),
                 onClick = {
-                    if (inputText.isNotEmpty()) {
-                        onChatSubmit(inputText)
-                        inputText = ""
-                    }
-                }
+                    onChatSubmit(inputText)
+                },
+                enabled = inputText.isNotEmpty() && !isWaitingForResponse
             ) {
                 Text("등록", fontSize = 28.sp, color = Color.Black)
             }
@@ -130,5 +134,31 @@ fun SpeechRecognitionButton(
         )
     ) {
         Text(if (isListening) "말하기 종료" else "말하기", fontSize = 28.sp)
+    }
+}
+
+class GptApiTask(private val onComplete: (String) -> Unit) : AsyncTask<String, Void, String>() {
+    override fun doInBackground(vararg params: String): String {
+        val message = params[0]
+        val encodedMessage = URLEncoder.encode(message, "UTF-8")
+        val urlString = "http://aws.lambda.gpt.com?prompt=$encodedMessage"
+        val url = URL(urlString)
+        val connection = url.openConnection() as HttpURLConnection
+        connection.requestMethod = "GET"
+
+        return try {
+            val inputStream = connection.inputStream
+            val response = inputStream.bufferedReader().use { it.readText() }
+            inputStream.close()
+            response
+        } catch (e: Exception) {
+            "죄송합니다. 응답을 받아오는 데 문제가 발생했습니다."
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+    override fun onPostExecute(result: String) {
+        onComplete(result)
     }
 }

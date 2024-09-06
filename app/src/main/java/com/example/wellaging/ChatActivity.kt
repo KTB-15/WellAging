@@ -137,16 +137,17 @@ fun ChatScreen(
     onChatSubmit: (String) -> Unit
 ) {
     var chatMessages by remember { mutableStateOf(listOf<ChatMessage>()) }
+    var inputText by remember { mutableStateOf("") }
+    var isListening by remember { mutableStateOf(false) }
+    var isWaitingForResponse by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) { chatMessages = listOf(ChatMessage("안녕?")) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        ChatTextBox(message = "안녕?")
-
-        Spacer(modifier = Modifier.height(16.dp))
-
         ChatList(messages = chatMessages)
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -156,9 +157,21 @@ fun ChatScreen(
             onStopListening = onStopListening,
             recognizedText = recognizedText,
             onChatSubmit = { message ->
-                onChatSubmit(message)
-                chatMessages = chatMessages + ChatMessage(message, true)
-            }
+                if (!isWaitingForResponse) {
+                    chatMessages = chatMessages + ChatMessage(message, true)
+                    inputText = ""
+                    isWaitingForResponse = true
+
+                    // API 호출
+                    GptApiTask { response ->
+                        chatMessages = chatMessages + ChatMessage(response, false)
+                        isWaitingForResponse = false
+                    }.execute(message)
+                }
+            },
+            inputText = inputText,
+            onInputTextChange = { inputText = it },
+            isWaitingForResponse = isWaitingForResponse
         )
     }
 }
