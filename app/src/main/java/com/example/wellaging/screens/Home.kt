@@ -11,15 +11,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.wellaging.FontSizeViewModel
+import com.example.wellaging.MyApplication
 import com.example.wellaging.R
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,21 +65,23 @@ fun Home(
 
 @Composable
 fun SavingsProgress(fontSizeViewModel: FontSizeViewModel) {
+    val dataStore = (LocalContext.current.applicationContext as MyApplication).dataStore
+    val steps = dataStore.data
+        .map { preferences -> preferences[intPreferencesKey("steps")] ?: 0 }
+        .collectAsState(initial = 0)
     val totalSteps = 10000f
-    val currentSteps = 1876f
-    val progressPercentage = currentSteps / totalSteps
+    val progressPercentage = ((steps.value-107000) / totalSteps).coerceIn(0f, 1f)
     val sections = 4
 
     val stepTextSize = (28f + fontSizeViewModel.fontSizeAdjustment.value).sp
     val labelTextSize = (20f + fontSizeViewModel.fontSizeAdjustment.value).sp
-
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "${currentSteps.toInt()} 걸음",
+            text = "${steps.value-107000} 걸음",
             fontSize = stepTextSize,
             fontWeight = FontWeight.Bold,
             color = Color(red=255, green=65, blue=145)

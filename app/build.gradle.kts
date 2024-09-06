@@ -62,6 +62,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.0.5")
     implementation(libs.generativeai)
     implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.datastore.core.android)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -74,4 +75,5 @@ dependencies {
     implementation("androidx.activity:activity-compose")
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.material:material")
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
 }

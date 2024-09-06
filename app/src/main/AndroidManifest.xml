@@ -5,8 +5,10 @@
 
     <!-- permissions -->
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <uses-permission android:name="android.permission.health.READ_STEPS"/>
 
     <application
+        android:name=".MyApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -29,6 +31,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".ChatActivity" />
+        <service android:name=".StepCounterService" />
     </application>
 
 </manifest>

@@ -1,13 +1,19 @@
 package com.example.wellaging
 
 import android.Manifest
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,22 +40,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 
+// ViewModel to manage font size
 class FontSizeViewModel : ViewModel() {
     var fontSizeAdjustment = mutableStateOf(16f) // Default font size
 }
 
 class MainActivity : ComponentActivity() {
-
-    private val sensorManager by lazy {
-        getSystemService(Context.SENSOR_SERVICE) as SensorManager
-    }
-
-    private val sensor: Sensor? by lazy {
-        sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
-    }
+    private val ACTIVITY_RECOGNITION_REQUEST_CODE = 100
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -61,6 +63,18 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // 권한 확인 및 요청
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION)
+            != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                arrayOf(Manifest.permission.ACTIVITY_RECOGNITION),
+                ACTIVITY_RECOGNITION_REQUEST_CODE)
+        }
+
+        // Start the step counter service
+        startService(Intent(this, StepCounterService::class.java))
 
         setContent {
             MaterialTheme {
@@ -74,7 +88,6 @@ class MainActivity : ComponentActivity() {
                     Column {
                         // Top bar with font control
                         TopAppBarWithFontControl(
-                            fontSizeViewModel = fontSizeViewModel,
                             onFontSizeIncrease = {
                                 fontSizeViewModel.fontSizeAdjustment.value += 2f
                             },
@@ -95,7 +108,6 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopAppBarWithFontControl(
-    fontSizeViewModel: FontSizeViewModel,
     onFontSizeIncrease: () -> Unit,
     onFontSizeDecrease: () -> Unit
 ) {
