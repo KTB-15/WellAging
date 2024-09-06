@@ -40,6 +40,7 @@ import com.example.wellaging.ui.component.ApiTask
 import com.example.wellaging.ui.component.ChatItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Locale
 
@@ -189,9 +190,22 @@ fun Chat(
                             messages = messages + Pair("대화가 종료되었습니다. 감사합니다.", false)
                             ttsWrapper.speakText("대화가 종료되었습니다. 감사합니다.")
                             isChatEnded = true
-
+                            // 퀴즈 복사
+                            val quizResponse = apiTask.makeQnA(chatHistory)
+                            quizs = try {
+                                val jsonArray = JSONArray(quizResponse)
+                                MutableList(jsonArray.length()) { index ->
+                                    val jsonObject = jsonArray.getJSONObject(index)
+                                    ChatItem(
+                                        Q = jsonObject.getString("Q"),
+                                        A = jsonObject.getString("A")
+                                    )
+                                }
+                            } catch (e: Exception) {
+                                mutableListOf()
+                            }
                             // 대화 종료시 전역 변수 초기화
-                            Log.d("TTSTTSTTS", chatHistory.toString())
+                            Log.d("TTSTTSTTS", quizs.toString())
                         }
                     } catch (e: Exception) {
                         val errorMessage = "죄송합니다. 오류가 발생했습니다: ${e.message}, $message"
