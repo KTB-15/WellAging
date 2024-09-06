@@ -71,7 +71,7 @@ fun Chat(
 
     LaunchedEffect(Unit) {
         viewModel.checkAndRequestAudioPermission()
-        addMessage("안녕하세요~", false)
+        addMessage("안녕하세요! 식사하셨나요?", false)
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
