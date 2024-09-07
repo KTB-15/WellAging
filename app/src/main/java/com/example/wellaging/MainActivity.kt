@@ -48,9 +48,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 // ViewModel to manage font size
 class FontSizeViewModel : ViewModel() {
     private val minFontSize = 8f
-    private val maxFontSize = 20f
+    private val maxFontSize = 18f
     private val fontSizeStep = 2f
-    var fontSizeAdjustment = mutableStateOf(16f) // Default font size
+    var fontSizeAdjustment = mutableStateOf(14f) // Default font size
     fun increaseFontSize() {
         fontSizeAdjustment.value = (fontSizeAdjustment.value + fontSizeStep).coerceAtMost(maxFontSize)
     }
