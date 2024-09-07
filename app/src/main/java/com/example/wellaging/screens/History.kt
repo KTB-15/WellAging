@@ -52,7 +52,8 @@ fun History(
             question = selectedQuestion,
             userAnswer = selectedAnswer,
             correctAnswer = correctAnswer,
-            onBack = { showDetail = false }  // 뒤로가기 버튼 클릭 시 다시 목록 화면으로 전환
+            onBack = { showDetail = false },
+            fontSizeViewModel// 뒤로가기 버튼 클릭 시 다시 목록 화면으로 전환
         )
     } else {
         // 목록 화면
@@ -93,7 +94,9 @@ fun AnswerDetailScreen(
     question: String,
     userAnswer: String,
     correctAnswer: String,
-    onBack: () -> Unit  // 뒤로 가기 이벤트
+    onBack: () -> Unit,  // 뒤로 가기 이벤트
+    fontSizeViewModel: FontSizeViewModel
+
 ) {
     Scaffold { paddingValues ->
         Column(
@@ -104,13 +107,13 @@ fun AnswerDetailScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("오답", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Red)
+            Text("오답", fontSize = fontSizeViewModel.fontSizeAdjustment.value.sp, fontWeight = FontWeight.Bold, color = Color.Red)
             Spacer(modifier = Modifier.height(16.dp))
-            Text("질문: $question", fontSize = 18.sp, fontWeight = FontWeight.Medium)
+            Text("질문: $question", fontSize = fontSizeViewModel.fontSizeAdjustment.value.sp, fontWeight = FontWeight.Medium)
             Spacer(modifier = Modifier.height(16.dp))
-            Text("내가 한 답변: $userAnswer", fontSize = 18.sp, fontWeight = FontWeight.Medium)
+            Text("내가 한 답변: $userAnswer", fontSize = fontSizeViewModel.fontSizeAdjustment.value.sp, fontWeight = FontWeight.Medium)
             Spacer(modifier = Modifier.height(16.dp))
-            Text("정답: $correctAnswer", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = Color.Green)
+            Text("정답: $correctAnswer", fontSize = fontSizeViewModel.fontSizeAdjustment.value.sp, fontWeight = FontWeight.Medium, color = Color.Green)
 
             // 뒤로 가기 버튼
             Spacer(modifier = Modifier.height(32.dp))
