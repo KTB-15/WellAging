@@ -186,7 +186,7 @@ fun Chat(
                         ttsWrapper.speakText(aiMessage)
 
                         // 대화 길이 초과시 종료
-                        if (accumulatedChat.length - TALK_PROMPT_LENGTH >= 100) {
+                        if (accumulatedChat.length - TALK_PROMPT_LENGTH >= 200) {
                             messages = messages + Pair("대화가 종료되었습니다. 감사합니다.", false)
                             ttsWrapper.speakText("대화가 종료되었습니다. 감사합니다.")
                             isChatEnded = true
