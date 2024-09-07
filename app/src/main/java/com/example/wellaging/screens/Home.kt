@@ -74,7 +74,7 @@ fun SavingsProgress(fontSizeViewModel: FontSizeViewModel) {
     val sections = 4
 
     val stepTextSize = (28f + fontSizeViewModel.fontSizeAdjustment.value).sp
-    val labelTextSize = (20f + fontSizeViewModel.fontSizeAdjustment.value).sp
+    val labelTextSize = (12f + fontSizeViewModel.fontSizeAdjustment.value).sp
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,

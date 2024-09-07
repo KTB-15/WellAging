@@ -87,9 +87,12 @@ fun Quiz(
     LaunchedEffect(recognizedText) {
         if (recognizedText.isNotEmpty() && !isListening) {
             addMessage(recognizedText, true)
+            Log.d("IMPORTANT KTB!?!?", recognizedText)
             isWaitingForAiResponse = true
             coroutineScope.launch {
                 try {
+                    Log.d("IMPORTANT KTB", quizs[currentQuizIndex].A)
+                    Log.d("IMPORTANT KTB", recognizedText)
                     val response = apiTask.checkAnswer(quizs[currentQuizIndex].A, recognizedText)
                     addMessage(response.result, false)
 
@@ -103,9 +106,9 @@ fun Quiz(
                     addMessage("죄송합니다. 오류가 발생했습니다: ${e.message}", false)
                 } finally {
                     isWaitingForAiResponse = false
+                    viewModel.clearRecognizedText()
                 }
             }
-            viewModel.clearRecognizedText()
         }
     }
 
